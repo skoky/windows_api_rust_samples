@@ -1,5 +1,5 @@
 [package]
-name = "wifi_test"
+name = "windows_api_example"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,4 +16,5 @@ features = [
     "Win32_NetworkManagement_WiFi",
     "Foundation_Collections",
     "Foundation",
+    "Media_SpeechRecognition"
 ]

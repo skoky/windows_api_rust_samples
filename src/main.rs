@@ -1,6 +1,10 @@
+use std::process::exit;
+
+use windows::core::HSTRING;
 use windows::Devices::WiFi::{WiFiAdapter, WiFiAvailableNetwork, WiFiNetworkReport};
 use windows::Foundation::{AsyncStatus, IAsyncOperation};
-use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionResult, SpeechRecognizer};
+use windows::Globalization::Language;
+use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionResult, SpeechRecognizer, SpeechRecognizerTimeouts};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = futures::executor::block_on(report_wifi());
@@ -9,7 +13,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn speech() -> Result<(), Box<dyn std::error::Error>> {
     let speech: SpeechRecognizer = SpeechRecognizer::new()?;
+
+    let language: Language = speech.CurrentLanguage()?;
+    let language2: Language = SpeechRecognizer::SystemSpeechLanguage()?;
+    println!("Languages: {:?} / {:?}", language.DisplayName()?, language2.DisplayName()?);
     let c: IAsyncOperation<SpeechRecognitionCompilationResult> = speech.CompileConstraintsAsync()?;
+    // speech.ContinuousRecognitionSession()
+    let timeouts: SpeechRecognizerTimeouts = speech.Timeouts()?;
+    println!("Timeouts silence: {:?} bable: {:?}", timeouts.EndSilenceTimeout()?, timeouts.BabbleTimeout()?);
 
     // TODO better await
     loop {
@@ -18,20 +29,28 @@ async fn speech() -> Result<(), Box<dyn std::error::Error>> {
             break;
         }
     }
-    println!("Listening...");
 
-    let result: IAsyncOperation<SpeechRecognitionResult> = speech.RecognizeAsync()?;
-
-    // TODO better await
     loop {
-        let status: AsyncStatus = result.Status()?;
-        if status == AsyncStatus::Completed {
-            break;
+        println!("Listening... Say \"exit\" to stop");
+
+        // let result: IAsyncOperation<SpeechRecognitionResult> = speech.RecognizeWithUIAsync()?;
+        let result: IAsyncOperation<SpeechRecognitionResult> = speech.RecognizeAsync()?;
+
+        // TODO better await
+        loop {
+            let status: AsyncStatus = result.Status()?;
+            if status == AsyncStatus::Completed {
+                break;
+            }
+        }
+        let x: SpeechRecognitionResult = result.get()?;
+        let sentence: HSTRING = x.Text()?;
+        println!(">>> {}", sentence);
+        if sentence.to_string_lossy() == "exit" {
+            exit(0);
         }
     }
-    let x: SpeechRecognitionResult = result.get()?;
-    println!(">>> {}", x.Text()?);
-    Ok(())
+
 }
 
 async fn report_wifi() -> Result<(), Box<dyn std::error::Error>> {

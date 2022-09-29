@@ -4,7 +4,7 @@ use windows::core::HSTRING;
 use windows::Devices::WiFi::{WiFiAdapter, WiFiAvailableNetwork, WiFiNetworkReport};
 use windows::Foundation::{AsyncStatus, IAsyncOperation};
 use windows::Globalization::Language;
-use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognizer, SpeechRecognizerTimeouts};
+use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognizer, SpeechRecognizerTimeouts};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = futures::executor::block_on(report_wifi());
@@ -17,43 +17,29 @@ async fn speech() -> Result<(), Box<dyn std::error::Error>> {
     let language: Language = speech.CurrentLanguage()?;
     let language2: Language = SpeechRecognizer::SystemSpeechLanguage()?;
     println!("Languages: {:?} / {:?}", language.DisplayName()?, language2.DisplayName()?);
-    let c: IAsyncOperation<SpeechRecognitionCompilationResult> = speech.CompileConstraintsAsync()?;
+
+    let c: SpeechRecognitionCompilationResult = speech.CompileConstraintsAsync()?.await?;
     // speech.ContinuousRecognitionSession()
+    println!("Init status {:?}", c.Status()?);
 
     let timeouts: SpeechRecognizerTimeouts = speech.Timeouts()?;
     println!("Timeouts silence: {:?} bable: {:?}", timeouts.EndSilenceTimeout()?, timeouts.BabbleTimeout()?);
-
-    // TODO better await
-    loop {
-        let status: AsyncStatus = c.Status()?;
-        if status == AsyncStatus::Completed {
-            break;
-        }
-    }
 
     loop {
         println!("Listening... Say \"exit\" to stop");
 
         // let result: IAsyncOperation<SpeechRecognitionResult> = speech.RecognizeWithUIAsync()?;
-        let result: IAsyncOperation<SpeechRecognitionResult> = speech.RecognizeAsync()?;
+        let result: SpeechRecognitionResult = speech.RecognizeAsync()?.await?;
 
-        // TODO better await
-        loop {
-            let status: AsyncStatus = result.Status()?;
-            if status == AsyncStatus::Completed {
-                break;
-            }
-        }
-        let x: SpeechRecognitionResult = result.get()?;
-        let sentence: HSTRING = x.Text()?;
-        let confidence: SpeechRecognitionConfidence = x.Confidence()?;
+        let sentence: HSTRING = result.Text()?;
+        let confidence: SpeechRecognitionConfidence = result.Confidence()?;
         let confidence_text = match confidence {
             SpeechRecognitionConfidence::High => "High",
             SpeechRecognitionConfidence::Medium => "Medium",
             SpeechRecognitionConfidence::Low => "Low",
             _ => "?"
         };
-        let status = x.Status()?;
+        let status: SpeechRecognitionResultStatus = result.Status()?;
         println!(">>> {:?}({}): {}", status, confidence_text, sentence);
         if sentence.to_string_lossy() == "exit" {
             exit(0);

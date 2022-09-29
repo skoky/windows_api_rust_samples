@@ -53,7 +53,8 @@ async fn speech() -> Result<(), Box<dyn std::error::Error>> {
             SpeechRecognitionConfidence::Low => "Low",
             _ => "?"
         };
-        println!(">>> ({}): {}", confidence_text, sentence);
+        let status = x.Status()?;
+        println!(">>> {:?}({}): {}", status, confidence_text, sentence);
         if sentence.to_string_lossy() == "exit" {
             exit(0);
         }

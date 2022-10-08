@@ -17,5 +17,6 @@ features = [
     "Foundation_Collections",
     "Foundation",
     "Media_SpeechRecognition",
-    "Globalization"
+    "Globalization",
+    "Devices_Geolocation"
 ]

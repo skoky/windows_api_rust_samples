@@ -5,6 +5,7 @@ use windows::Devices::Geolocation::{CivicAddress, Geocoordinate, GeolocationAcce
 use windows::Devices::WiFi::{WiFiAdapter, WiFiAvailableNetwork, WiFiNetworkReport};
 use windows::Globalization::Language;
 use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognizer, SpeechRecognizerTimeouts};
+use windows::Networking::Connectivity::NetworkConnectivityLevel;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = futures::executor::block_on(print_geolocation());
@@ -98,13 +99,16 @@ async fn report_wifi() -> Result<String, Box<dyn std::error::Error>> {
             "---".to_string()
         };
         let report: WiFiNetworkReport = adapter.NetworkReport()?;
-
+        let cp = match np.GetNetworkConnectivityLevel()? {
+            NetworkConnectivityLevel::InternetAccess => "Internet_connected".to_string(),
+            _ => "Internet_NOT_connected".to_string()
+        };
         for network in report.AvailableNetworks()? {
             let n: WiFiAvailableNetwork = network;
             let prc = n.SignalBars()? * 25;
             if n.Ssid()? == connected_wifi {
-                // println!("Connected Wifi: {:?} {}% {}", n.Ssid()?, prc, n.ChannelCenterFrequencyInKilohertz()?);
-                return Ok(format!("{},{}%", connected_wifi, prc))
+                println!("Connected Wifi: {:?} {}% {}", n.Ssid()?, prc, cp);
+                return Ok(format!("{},{}%,{}", connected_wifi, prc, cp))
             }
         }
     }

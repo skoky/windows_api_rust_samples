@@ -1,16 +1,17 @@
 use std::process::exit;
 
 use windows::core::HSTRING;
-use windows::Devices::Geolocation::{BasicGeoposition, CivicAddress, Geocoordinate, GeolocationAccessStatus, Geolocator, Geoposition, PositionStatus};
+use windows::Devices::Geolocation::{CivicAddress, Geocoordinate, GeolocationAccessStatus, Geolocator, Geoposition, PositionStatus};
 use windows::Devices::WiFi::{WiFiAdapter, WiFiAvailableNetwork, WiFiNetworkReport};
-use windows::Foundation::{AsyncStatus, IAsyncOperation};
 use windows::Globalization::Language;
 use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognizer, SpeechRecognizerTimeouts};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = futures::executor::block_on(print_geolocation());
-    let _ = futures::executor::block_on(report_wifi());
-    futures::executor::block_on(speech())
+    let wifi = futures::executor::block_on(report_wifi());
+    println!("Connected wifi: {}", wifi.unwrap_or("?,?".to_string()));
+    let _ = futures::executor::block_on(speech());
+    Ok(())
 }
 
 async fn print_geolocation() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +20,6 @@ async fn print_geolocation() -> Result<(), Box<dyn std::error::Error>> {
     let status: GeolocationAccessStatus = Geolocator::RequestAccessAsync()?.await?;
     println!("Access {:?}", status);
     if status == GeolocationAccessStatus::Allowed {
-
         let position: Geoposition = locator.GetGeopositionAsync()?.await?;
         let acc = locator.DesiredAccuracyInMeters()?;
 
@@ -72,19 +72,41 @@ async fn speech() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-async fn report_wifi() -> Result<(), Box<dyn std::error::Error>> {
+async fn report_wifi() -> Result<String, Box<dyn std::error::Error>> {
     let nm = WiFiAdapter::RequestAccessAsync()?;
     println!("{:?}", nm.get()?);
     let adapter = WiFiAdapter::FindAllAdaptersAsync()?;
+
     for a in adapter.get()? {
         let adapter: WiFiAdapter = a;
+        let na = adapter.NetworkAdapter()?;
+        let np = match na.GetConnectedProfileAsync()?.await {
+            Ok(profile) => profile,
+            Err(e) => {
+                println!("Wifi not connected");
+                return Err(Box::new(e))
+            }
+        };
+        let nn = np.GetNetworkNames()?;
+
+        let connected_wifi = if nn.Size()? == 1 {
+            nn.GetAt(0).map(|n| n.to_string()).unwrap_or("---".to_string())
+        } else if nn.Size()? > 1 {
+            nn.GetAt(0).map(|n| n.to_string()).unwrap_or("---".to_string())
+        } else {
+            println!("No connected wifi found");
+            "---".to_string()
+        };
         let report: WiFiNetworkReport = adapter.NetworkReport()?;
+
         for network in report.AvailableNetworks()? {
             let n: WiFiAvailableNetwork = network;
-            println!("Network: {:?} {}kHz Signal: {} Timestamp: {:?}", n.Ssid()?,
-                     n.ChannelCenterFrequencyInKilohertz()?, n.SignalBars()?,
-                     n.Uptime()?);
+            let prc = n.SignalBars()? * 25;
+            if n.Ssid()? == connected_wifi {
+                // println!("Connected Wifi: {:?} {}% {}", n.Ssid()?, prc, n.ChannelCenterFrequencyInKilohertz()?);
+                return Ok(format!("{},{}%", connected_wifi, prc))
+            }
         }
     }
-    Ok(())
+    Ok("?,?".to_string())
 }

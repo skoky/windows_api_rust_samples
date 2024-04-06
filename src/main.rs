@@ -1,13 +1,19 @@
+mod volume;
+
 use std::process::exit;
 
 use windows::core::HSTRING;
 use windows::Devices::Geolocation::{CivicAddress, Geocoordinate, GeolocationAccessStatus, Geolocator, Geoposition, PositionStatus};
 use windows::Devices::WiFi::{WiFiAdapter, WiFiAvailableNetwork, WiFiNetworkReport};
 use windows::Globalization::Language;
-use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognizer, SpeechRecognizerTimeouts};
+use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognitionScenario, SpeechRecognitionTopicConstraint, SpeechRecognizer, SpeechRecognizerTimeouts};
 use windows::Networking::Connectivity::NetworkConnectivityLevel;
+use crate::volume::set_mic_volume;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(mic_err) = set_mic_volume() {
+        println!("Mic set error {:?}", mic_err);
+    }
     let _ = futures::executor::block_on(print_geolocation());
     let wifi = futures::executor::block_on(report_wifi());
     println!("Connected wifi: {}", wifi.unwrap_or("?,?".to_string()));

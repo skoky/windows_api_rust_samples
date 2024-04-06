@@ -10,13 +10,4 @@ futures = "0"
 
 [dependencies.windows]
 version = "*"
-features = [
-    "Devices_WiFi",
-    "Networking_Connectivity",
-    "Win32_NetworkManagement_WiFi",
-    "Foundation_Collections",
-    "Foundation",
-    "Media_SpeechRecognition",
-    "Globalization",
-    "Devices_Geolocation"
-]
+features = ["Devices_WiFi", "Networking_Connectivity", "Win32_NetworkManagement_WiFi", "Foundation_Collections", "Foundation", "Media_SpeechRecognition", "Media_Audio", "Win32_Foundation", "Win32_Media_Audio", "Win32_System_Com", "Globalization", "Devices_Geolocation", "Win32_Media_Audio_Endpoints"]

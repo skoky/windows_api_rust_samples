@@ -8,9 +8,10 @@ use windows::Devices::WiFi::{WiFiAdapter, WiFiAvailableNetwork, WiFiNetworkRepor
 use windows::Globalization::Language;
 use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognitionScenario, SpeechRecognitionTopicConstraint, SpeechRecognizer, SpeechRecognizerTimeouts};
 use windows::Networking::Connectivity::NetworkConnectivityLevel;
-use crate::volume::set_mic_volume;
+use crate::volume::{get_mic_volume, set_mic_volume};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    get_mic_volume();
     if let Err(mic_err) = set_mic_volume() {
         println!("Mic set error {:?}", mic_err);
     }

@@ -25,3 +25,28 @@ pub fn set_mic_volume() -> Result<()> {
     Ok(())
 }
 
+pub fn get_mic_volume() -> Result<(f32)> {
+    unsafe {
+        let _r = CoInitializeEx(None, COINIT_MULTITHREADED);
+
+        let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
+
+        let device = enumerator.GetDefaultAudioEndpoint(eCapture, eConsole)?;
+
+        let endpoint_volume: Endpoints::IAudioEndpointVolume = device.Activate(CLSCTX_ALL, None)?;
+
+        match endpoint_volume.GetMasterVolumeLevelScalar() {
+            Ok(volume) => {
+                println!("Mic volume is {}%", volume*100f32);
+                Ok(volume)
+            }
+            Err(e) => {
+                println!("Get volume error {:?}", e);
+                Err(e)
+            }
+        }
+
+    }
+
+}
+

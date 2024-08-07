@@ -34,4 +34,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: windows-sample-test-executable
-        path: target/release/windows_api_rust_samples.exe
+        path: target/release/windows_api_example.exe

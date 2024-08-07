@@ -1,4 +1,5 @@
 name: Rust Windows Build
+runs-on: self-hosted
 
 on:
   push:

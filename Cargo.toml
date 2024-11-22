@@ -7,10 +7,27 @@ edition = "2021"
 
 [dependencies]
 futures = "0"
+cpal = "0.15"
+ringbuffer = "0"
+hound = "3.5"
+rustfft = "6.1"
 
 [dependencies.windows]
 version = "*"
 features = ["Devices_WiFi", "Networking_Connectivity", "Win32_NetworkManagement_WiFi", "Foundation_Collections",
     "Foundation", "Media_SpeechRecognition", "Media_Audio", "Win32_Foundation", "Win32_Media_Audio", "Win32_System_Com",
     "Globalization", "Devices_Geolocation", "Win32_Media_Audio_Endpoints","Networking_NetworkOperators",
-"Win32_System_Power"]
+"Win32_System_Power","Win32_Networking_WinSock"]
+
+
+[[bin]]
+name = "windows_api_rust_sample"
+path = "src/main.rs"
+
+[[bin]]
+name = "onnx_sample"
+path = "src/onnx_main.rs"
+
+[[bin]]
+name = "uds_client_example"
+path = "src/uds.rs"

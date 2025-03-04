@@ -13,11 +13,22 @@ hound = "3.5"
 rustfft = "6.1"
 
 [dependencies.windows]
-version = "*"
-features = ["Devices_WiFi", "Networking_Connectivity", "Win32_NetworkManagement_WiFi", "Foundation_Collections",
-    "Foundation", "Media_SpeechRecognition", "Media_Audio", "Win32_Foundation", "Win32_Media_Audio", "Win32_System_Com",
-    "Globalization", "Devices_Geolocation", "Win32_Media_Audio_Endpoints","Networking_NetworkOperators",
-"Win32_System_Power","Win32_Networking_WinSock"]
+version = "0.60"
+features = ["Devices_WiFi", "Win32_NetworkManagement_WiFi", "Foundation_Collections", "Foundation", "Media_SpeechRecognition",
+    "Media_Audio", "Win32_Foundation", "Win32_Media_Audio", "Win32_System_Com", "Globalization", "Devices_Geolocation",
+    "Win32_Media_Audio_Endpoints", "Win32_System_Power", "Win32_Networking_WinSock", "Media_SpeechSynthesis",
+    "Win32_Media_Speech",
+    "Win32_System_Com",
+    "Win32_Foundation",
+    "Media_SpeechSynthesis",
+    "Media_Core",
+    "Storage_Streams",
+    "Foundation",
+    "Foundation_Collections",
+    "Media_Playback",
+    "Storage",
+    "Media_MediaProperties",
+]
 
 
 [[bin]]
@@ -31,3 +42,7 @@ path = "src/onnx_main.rs"
 [[bin]]
 name = "uds_client_example"
 path = "src/uds.rs"
+
+[[bin]]
+name = "say_example"
+path = "src/say.rs"

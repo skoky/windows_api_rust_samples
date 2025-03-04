@@ -2,26 +2,25 @@ mod volume;
 
 use std::process::exit;
 
+use crate::volume::set_mic_volume;
 use windows::core::HSTRING;
 use windows::Devices::Geolocation::{CivicAddress, Geocoordinate, GeolocationAccessStatus, Geolocator, Geoposition, PositionStatus};
-use windows::Devices::WiFi::{WiFiAdapter, WiFiAvailableNetwork, WiFiNetworkReport};
-use windows::Foundation::AsyncStatus;
 use windows::Globalization::Language;
-use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognitionScenario, SpeechRecognitionTopicConstraint, SpeechRecognizer, SpeechRecognizerTimeouts};
-use windows::Networking::Connectivity::NetworkConnectivityLevel;
+use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognizer, SpeechRecognizerTimeouts};
 use windows::Win32::System::Power::SYSTEM_POWER_STATUS;
-use crate::volume::{get_mic_volume, set_mic_volume};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    get_mic_volume();
+    // get_mic_volume();
     if let Err(mic_err) = set_mic_volume() {
         println!("Mic set error {:?}", mic_err);
     }
     let _ = futures::executor::block_on(print_geolocation());
-    let wifi = futures::executor::block_on(report_wifi());
-    println!("Connected wifi: {}", wifi.unwrap_or("?,?".to_string()));
+    // let wifi = futures::executor::block_on(report_wifi());
+    // println!("Connected wifi: {}", wifi.unwrap_or("?,?".to_string()));
     get_power_source();
-    let _ = futures::executor::block_on(speech());
+    if let Err(e) = futures::executor::block_on(speech()) {
+        println!("Err {:?}", e);
+    }
     Ok(())
 }
 
@@ -48,6 +47,7 @@ async fn print_geolocation() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn speech() -> Result<(), Box<dyn std::error::Error>> {
+    // windows::Media::SpeechSynthesis::
     let speech: SpeechRecognizer = SpeechRecognizer::new()?;
 
     let language: Language = speech.CurrentLanguage()?;
@@ -81,48 +81,6 @@ async fn speech() -> Result<(), Box<dyn std::error::Error>> {
             exit(0);
         }
     }
-}
-
-async fn report_wifi() -> Result<String, Box<dyn std::error::Error>> {
-    let nm = WiFiAdapter::RequestAccessAsync()?;
-    println!("{:?}", nm.get()?);
-    let adapter = WiFiAdapter::FindAllAdaptersAsync()?;
-
-    for a in adapter.get()? {
-        let adapter: WiFiAdapter = a;
-        let na = adapter.NetworkAdapter()?;
-        let np = match na.GetConnectedProfileAsync()?.get() {
-            Ok(profile) => profile,
-            Err(e) => {
-                println!("Wifi not connected");
-                return Err(Box::new(e))
-            }
-        };
-        let nn = np.GetNetworkNames()?;
-
-        let connected_wifi = if nn.Size()? == 1 {
-            nn.GetAt(0).map(|n| n.to_string()).unwrap_or("---".to_string())
-        } else if nn.Size()? > 1 {
-            nn.GetAt(0).map(|n| n.to_string()).unwrap_or("---".to_string())
-        } else {
-            println!("No connected wifi found");
-            "---".to_string()
-        };
-        let report: WiFiNetworkReport = adapter.NetworkReport()?;
-        let cp = match np.GetNetworkConnectivityLevel()? {
-            NetworkConnectivityLevel::InternetAccess => "Internet_connected".to_string(),
-            _ => "Internet_NOT_connected".to_string()
-        };
-        for network in report.AvailableNetworks()? {
-            let n: WiFiAvailableNetwork = network;
-            let prc = n.SignalBars()? * 25;
-            if n.Ssid()? == connected_wifi {
-                println!("Connected Wifi: {:?} {}% {}", n.Ssid()?, prc, cp);
-                return Ok(format!("{},{}%,{}", connected_wifi, prc, cp))
-            }
-        }
-    }
-    Ok("?,?".to_string())
 }
 
 

@@ -1,10 +1,10 @@
 mod volume;
 
 use std::process::exit;
-
 use crate::volume::set_mic_volume;
-use windows::core::HSTRING;
+use windows::core::{h, HSTRING};
 use windows::Devices::Geolocation::{CivicAddress, Geocoordinate, GeolocationAccessStatus, Geolocator, Geoposition, PositionStatus};
+use windows::Globalization;
 use windows::Globalization::Language;
 use windows::Media::SpeechRecognition::{SpeechRecognitionCompilationResult, SpeechRecognitionConfidence, SpeechRecognitionResult, SpeechRecognitionResultStatus, SpeechRecognizer, SpeechRecognizerTimeouts};
 use windows::Win32::System::Power::SYSTEM_POWER_STATUS;
@@ -48,11 +48,20 @@ async fn print_geolocation() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn speech() -> Result<(), Box<dyn std::error::Error>> {
     // windows::Media::SpeechSynthesis::
-    let speech: SpeechRecognizer = SpeechRecognizer::new()?;
+    // let speech: SpeechRecognizer = SpeechRecognizer::new()?;
+    // let vector = Vector::<HSTRING>::new()?;
+
+    // let languages = Language::GetMuiCompatibleLanguageListFromLanguageTags("cs-CZ")?;
+    // for l in languages {
+    //     println!("Language: {:?}", l);
+    // }
+    let czech_language: Globalization::Language = Language::CreateLanguage(h!("en-us"))?;
+    let speech = SpeechRecognizer::Create(&czech_language)?;
 
     let language: Language = speech.CurrentLanguage()?;
     let language2: Language = SpeechRecognizer::SystemSpeechLanguage()?;
     println!("Languages: {:?} / {:?}", language.DisplayName()?, language2.DisplayName()?);
+
 
     let c: SpeechRecognitionCompilationResult = speech.CompileConstraintsAsync()?.get()?;
     // speech.ContinuousRecognitionSession()
